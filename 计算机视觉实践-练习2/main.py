@@ -68,6 +68,7 @@ def trainer(model, trainloader, testloader, writer, criterion, config):
     optimizer = optim.Adam(model.parameters(), lr=config['learning_rate'], weight_decay=1e-4)
     last_loss = -10005
     best_accuracy = 0
+    batches = len(trainloader.dataset)//config['batch_size']
     for epoch in range(config['epochs']):
         for batch, (imgs, labels) in enumerate(trainloader):
             imgs, labels = imgs.to(device), labels.to(device)
@@ -82,7 +83,7 @@ def trainer(model, trainloader, testloader, writer, criterion, config):
             else:
                 last_loss = last_loss * 0.99 + loss.item()
 
-            writer.add_scalar("Loss/Train", last_loss, batch)
+            writer.add_scalar("Loss/Train", last_loss, batch+epoch*batches)
 
         valid_pred_true, valid_set_size = 0, 0
         test_loss_sum = 0.
@@ -104,7 +105,7 @@ def trainer(model, trainloader, testloader, writer, criterion, config):
         accuracy = valid_pred_true / valid_set_size
         if best_accuracy < accuracy:
             torch.save(model.state_dict(), config['save_path'])
-        writer.add_scalar("Loss/Test", last_loss, batch)
+        writer.add_scalar("Loss/Test", last_loss, epoch)
         writer.add_scalar('Results/Precision', accuracy, epoch)
         print("epoch: {:}, Loss = {:.5f}, Precision: {:.5f}".format(epoch, loss.item(), accuracy))
 
